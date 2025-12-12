@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AS101 Astronomy Quiz Bank</title>
+    <style>
+        :root {
+            --kahoot-purple: #46178f;
+            --kahoot-blue: #1368ce;
+            --kahoot-red: #e21b3c;
+            --kahoot-yellow: #d89e00;
+            --kahoot-green: #26890c;
+            --text-color: #fff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--kahoot-purple);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 650px;
+            position: relative;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            height: 100%;
+            flex-grow: 1;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        h1 { color: white; font-size: 2.2rem; margin-bottom: 0.5rem; }
+        p { color: #e0e0e0; font-size: 1.1rem; margin-bottom: 2rem; }
+
+        .btn {
+            padding: 20px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, opacity 0.2s;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn span { font-size: 0.8rem; font-weight: normal; opacity: 0.8; margin-top: 5px; }
+        
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+        .btn-blue { background-color: var(--kahoot-blue); }
+        .btn-green { background-color: var(--kahoot-green); }
+        .btn-red { background-color: var(--kahoot-red); }
+        
+        .btn-restart { 
+            background-color: var(--kahoot-yellow); 
+            color: black; 
+            margin-top: 20px;
+            width: auto;
+            padding: 15px 40px;
+        }
+
+        /* Game Screen */
+        .header-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 25px;
+            box-sizing: border-box;
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .question-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 90%;
+            margin: 20px 0;
+        }
+
+        .question-box {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 5px;
+            width: 100%;
+            font-size: 1.3rem;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #ccc;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            margin-top: auto;
+            padding-bottom: 10px;
+        }
+
+        .option-btn {
+            padding: 20px 10px;
+            color: white;
+            font-size: 1.0rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s, transform 0.2s;
+            min-height: 80px;
+        }
+
+        .opt-1 { background-color: var(--kahoot-red); }
+        .opt-2 { background-color: var(--kahoot-blue); }
+        .opt-3 { background-color: var(--kahoot-yellow); }
+        .opt-4 { background-color: var(--kahoot-green); }
+        .opt-5 { background-color: #666; } /* Fallback for 5th option if needed, usually mapped to colors */
+
+        /* Responsive 5th option handling */
+        .option-btn:nth-child(5) {
+             grid-column: 1 / -1;
+             background-color: #888;
+        }
+
+        .true-false-grid .option-btn { height: 120px; font-size: 1.8rem; }
+
+        /* Animation Classes */
+        .wrong-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border: 4px solid var(--kahoot-red);
+        }
+
+        /* Correct Answer Highlight */
+        .correct-flash {
+            border: 4px solid #fff !important;
+            box-shadow: 0 0 20px #fff;
+            transform: scale(1.02);
+            z-index: 10;
+            opacity: 1 !important;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-4px, 0, 0); }
+            20%, 80% { transform: translate3d(8px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-16px, 0, 0); }
+            40%, 60% { transform: translate3d(16px, 0, 0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .question-box { font-size: 1.1rem; padding: 15px; }
+            .menu-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+    
+    <!-- Menu Screen -->
+    <div id="menu-screen" class="screen active">
+        <h1>AS101 Exam Prep</h1>
+        <p>Select a module to begin.</p>
+        <div class="menu-grid">
+            <button class="btn btn-blue" onclick="startQuiz(1)">
+                Quiz 1: Cosmic Calendar & Sky
+                <span>(Scale, Phases, Motion)</span>
+            </button>
+            <button class="btn btn-blue" onclick="startQuiz(2)">
+                Quiz 2: History & Light
+                <span>(Orbits, Telescopes, Gravity)</span>
+            </button>
+            <button class="btn btn-blue" onclick="startQuiz(3)">
+                Quiz 3: Formation & Exoplanets
+                <span>(Solar System, Detection)</span>
+            </button>
+            <button class="btn btn-green" onclick="startQuiz(4)">
+                Quiz 4: Planets & Moons
+                <span>(Terrestrial vs Jovian)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div class="header-bar">
+            <span id="q-count">1 / 50</span>
+            <span id="score">Score: 0</span>
+        </div>
+        
+        <div class="question-area">
+            <div id="question-text" class="question-box">
+                Loading Question...
+            </div>
+        </div>
+
+        <div id="options-container" class="options-grid">
+            <!-- Buttons injected by JS -->
+        </div>
+    </div>
+
+    <!-- End Screen -->
+    <div id="end-screen" class="screen">
+        <h1>Quiz Completed!</h1>
+        <p id="final-score">Your Score: 0</p>
+        
+        <div id="retry-section" style="display:none; margin-bottom: 20px;">
+            <p style="color: #ffcccc;">You answered <span id="wrong-count">0</span> questions incorrectly.</p>
+            <button class="btn btn-blue" onclick="startRetryMode()">Retry Wrong Questions</button>
+        </div>
+
+        <button class="btn btn-restart" onclick="location.reload()">Back to Menu</button>
+    </div>
+</div>
+
+<script>
+    // --- DATABASE ---
+    const allQuizzes = {
+        1: [
+            { q: "On the Cosmic Calendar about when did the solar system begin to form?", options: ["Around the summer solstice - June 21", "Around the spring equinox - March 21", "Sometime around Labour Day - September 1", "January 1", "About mid-November"], answer: 2 },
+            { q: "Which of the following is largest?", options: ["size of Pluto's orbit", "size of a typical galaxy", "1 Astronomical Unit", "distance to the nearest star (other than our Sun)", "1 light-year"], answer: 1 },
+            { q: "Which of the following celestial phenomena is the largest?", options: ["The orbit of Neptune", "The distance to Proxima Centauri", "The solar system", "The orbit of Jupiter", "The Milky Way galaxy"], answer: 4 },
+            { q: "On the Cosmic Calendar (where the age of the universe is condensed into the equivalent to one calendar year) most of recorded history takes up what portion of the 'year'?", options: ["the last few minutes of the year", "the last few months of the year", "the last few seconds of the year", "the last few days of the year", "the last few weeks of the year"], answer: 2 },
+            { q: "Which of the following has your 'address' in the correct order?", options: ["you, Earth, solar system, Milky Way, Local Supercluster, Local Group", "you, Earth, solar system, Milky Way, Local Group, Local Supercluster", "you, Earth, Local Group, Local Supercluster, solar system, Milky Way", "you, Earth, solar system, Local Group, Milky Way, Local Supercluster", "you, Earth, solar system, Local Group, Local Supercluster, Milky Way"], answer: 1 },
+            { q: "The order of the planets beyond Earth, away from the Sun, is", options: ["Mars, Venus, Jupiter, Saturn, Neptune", "Mars, Saturn, Jupiter, Neptune, Uranus", "Venus, Mars, Jupiter, Saturn, Uranus, Neptune", "Mars, Ceres, Jupiter, Saturn, Neptune, Uranus", "Mars, Jupiter, Saturn, Uranus, Neptune"], answer: 4 },
+            { q: "The nearest star to the Sun (and us) is Proxima Centauri, a red dwarf in the Alpha Centauri system. How far away from the Sun is Proxima Centauri?", options: ["One light-year; that's how a light-year is defined", "100 light-years", "4.2 light-years", "About 1000 AU", "14.2 light-years"], answer: 2 },
+            { q: "Which of the following statements about the sizes of stars is most true?", options: ["Rigel, the bluish star representing the left foot of Orion, is considerably larger than the Sun.", "The Sun is one of the bigger stars in our galaxy.", "Antares, the brightest star in the constellation Scorpius, is bigger than Earth but smaller than the Sun.", "All stars in our galaxy are about the same size.", "The largest known star, VY Canis Majoris, is about 5 times larger than the Sun."], answer: 0 },
+            { q: "The distance across our galaxy in light-years is closest to", options: ["1,000", "1,000,000", "10,000,000", "10,000", "100,000"], answer: 4 },
+            { q: "Which of the following uses the term 'light-year' correctly?", options: ["It’s going to take me at least a light-year to fix this car.", "The nearest star is about 4.2 ly from our solar system.", "All of the other answers to this question use the term, light-year, correctly.", "My professor is a little weird. He must be at least 50 light-years old.", "How come you finished your assignment light-years after I completed mine? It wasn't that difficult."], answer: 1 },
+            { q: "What is an Astronomical Unit (AU)?", options: ["The average distance between the Sun and the Earth.", "1.5 x 10^8 kilometres (km).", "1.5 x 10^13 centimetres", "150 million kilometres", "All of the rest"], answer: 4 },
+            { q: "Which of the following objects within our solar system is the smallest?", options: ["Mars", "Neptune", "Mercury", "Moon", "Earth"], answer: 3 },
+            { q: "On the Cosmic Calendar when did the big bang occur?", options: ["March 21", "September 1", "January 1", "December 31", "December 25"], answer: 2 },
+            { q: "Which of the following statements does not use the term light-year in an appropriate way?", options: ["The Milky Way Galaxy is about 100,000 light-years in diameter.", "It will take me light-years to run this marathon.", "It's about 8.6 light-years from here to Sirius.", "It will take the Voyager spacecraft about 20,000 years to travel just 1 light-year.", "A light-year is about 10 trillion kilometres."], answer: 1 },
+            { q: "Which of the following is furthest from the Sun?", options: ["Neptune", "a comet in the Kuiper belt", "Pluto", "a comet in the Oort cloud", "an asteroid in the asteroid belt"], answer: 3 },
+            { q: "What is a light-year?", options: ["The distance light travels in one year.", "The average distance between the Sun and the Earth.", "The time is takes light to travel halfway across the Milky Way galaxy.", "The time is takes light to get to the nearest star, Proxima Centauri.", "The time for light to travel to Earth from the Andromeda galaxy."], answer: 0 },
+            { q: "In our journey outward from the Sun what is a feature you notice about the spacing of the planets?", options: ["The spacing between the planets is actually quite random...", "The largest planets are closer to the Sun...", "The inner planets are grouped together and relatively close to the Sun while the planets from Jupiter out to Neptune are spaced much further apart.", "What's most interesting is that some planets share the same orbit.", "They are all pretty much evenly spaced"], answer: 2 },
+            { q: "From a latitude of 42 degrees, how many degrees above the northern horizon does the north celestial pole appear to be?", options: ["42", "24", "90", "48", "23.4"], answer: 0 },
+            { q: "What conditions are required for a lunar eclipse?", options: ["The phase of the Moon must be full, and the nodes of the Moon's orbit must be nearly aligned with the Earth and the Sun.", "The phase of the Moon must be new, and the nodes...", "The phase of the Moon must be new, and the Moon's orbital plane...", "The phase of the Moon can be new or full...", "The phase of the Moon must be full, and the Moon's orbital plane must lie in the ecliptic."], answer: 0 },
+            { q: "Which of the following statements about lunar phases is true?", options: ["The time between new moons is two weeks.", "It is possible to have two full moons during November, but not during December.", "The full moon sometimes rises around midnight.", "It is possible to have two full moons during January, but not during February.", "The time from one new moon to the next..."], answer: 3 },
+            { q: "Which of the following statements about sidereal and solar days is not true?", options: ["The time it takes for the Moon to make one circuit of our sky is one solar day.", "The time it takes for a star to make one circuit of our sky is one sidereal day.", "A solar day is 4 minutes longer than a sidereal day.", "The time it takes for the Sun to make one circuit of our sky is one solar day.", "A solar day represents more than 360 degrees of rotation for the Earth."], answer: 0 },
+            { q: "What does the Big Dipper exemplify?", options: ["an asterism", "a double-star pair", "part of the constellation, Hercules", "a constellation", "a sky figure"], answer: 0 },
+            { q: "Which of the following statements is NOT true about total solar eclipses?", options: ["The Moon passes through the shadow of the Earth.", "The Sun, Moon and Earth are aligned and in that order.", "The darkest part of the Moon's shadow, the umbra, touches Earth.", "The solar corona is often visible.", "The totality phase of a solar eclipse lasts for only a few minutes."], answer: 0 },
+            { q: "On the summer solstice in June, the Sun will be directly above __________ and all locations north of __________ will experience daylight all day.", options: ["The Tropic of Cancer; the Antarctic Circle", "The Tropic of Cancer; the Arctic Circle", "The Tropic of Capricorn; the Antarctic Circle", "The Tropic of Capricorn; the Arctic Circle", "The Equator; Edmonton"], answer: 1 },
+            { q: "The ecliptic is the apparent path of the Sun moving how?", options: ["northward among the stars", "south westward among the stars", "north eastward among the stars", "westward among the stars", "eastward among the stars"], answer: 4 },
+            { q: "What makes the North Star, Polaris, special?", options: ["It can be used to determine your longitude on Earth.", "It is the 5th brightest star in the sky.", "It appears very close to the north celestial pole right now.", "It is the star straight overhead when you're on the equator.", "It is the star directly on your northern horizon."], answer: 2 },
+            { q: "If we consider a circular sphere around our solar system with a radius of about 10 light-years (10 ly) how many stars, other than the Sun, would be included in such a sphere?", options: ["none", "two", "five", "ten", "fifty"], answer: 3 },
+            { q: "Which of the following statements is true?", options: ["Both hemispheres receive the same sunlight on equinoxes.", "Both hemispheres receive the same sunlight on solstices.", "The Northern Hemisphere receives most direct sunlight on summer solstice.", "The Southern Hemisphere receives most direct sunlight on summer solstice.", "Both A and C are true."], answer: 4 },
+            { q: "Which of the following correctly describes the meridian in your sky?", options: ["a half-circle extending from your horizon due north, through your zenith, to your horizon due south", "a half-circle extending from your horizon due east...", "the boundary between the portion of the celestial sphere you can see...", "the point directly over your head", "a half-circle extending from your horizon due east..."], answer: 0 },
+            { q: "What conditions are required for a solar eclipse?", options: ["The phase of the Moon can be new or full...", "The phase of the Moon must be new, and the Moon's orbital plane must lie in the ecliptic.", "The phase of the Moon must be full...", "The phase of the Moon must be new, and the nodes of the Moon's orbit must be nearly aligned with the Earth and the Sun.", "The phase of the Moon must be full..."], answer: 3 },
+            { q: "Which of the following statements about the ecliptic plane is not true?", options: ["It is the plane of the Earth's orbit around the Sun.", "It is the plane of the Moon's orbit around the Earth.", "The nodes of the Moon's orbit lie in the ecliptic plane.", "During a solar eclipse, the Moon lies in the ecliptic plane.", "During a lunar eclipse, the Moon lies in the ecliptic plane."], answer: 1 },
+            { q: "Which of the following sequences is a correct ordering of the Moon's phases?", options: ["full, waxing crescent, new", "waxing gibbous, full, waning gibbous", "full, new, third quarter", "waning gibbous, new, waxing crescent", "first quarter, new, third quarter"], answer: 1 },
+            { q: "What is the ecliptic?", options: ["the constellations commonly used in astrology", "when the Moon passes in front of the Sun", "the Sun's daily path across the sky", "the Sun's apparent path along the celestial sphere", "the Moon's apparent path along the celestial sphere"], answer: 3 },
+            { q: "Each cycle of the Earth's precession takes about", options: ["26,000 light-years", "None of the others.", "2,600 years", "26,000 years", "2,600 light-years"], answer: 3 },
+            { q: "Patterns of stars in constellations hardly change in appearance over times of even a few thousand years. Why?", options: ["Although most stars move...", "Stars are fixed and never move.", "Stars move, but they move very slowly...", "Stars within a constellation move together...", "The stars in our sky actually move rapidly relative to us... but are so far away..."], answer: 4 },
+            { q: "How many constellations make up the entire celestial sphere?", options: ["24", "44", "64", "88", "144"], answer: 3 },
+            { q: "The problem with the Julian calendar was that it was", options: ["Too short by 11 hours in a year", "There was nothing wrong with it...", "Too long by 11 minutes in a year", "Too short by 11 minutes in a year", "Too long by 11 days in a year"], answer: 2 },
+            { q: "Which one is a mismatch between constellation and star?", options: ["Canis Minor, Polaris", "Orion, Betelgeuse", "Canis Major, Sirius", "Gemini, Pollux", "Cygnus, Deneb"], answer: 0 },
+            { q: "On the vernal and autumnal equinoxes,", options: ["every place on Earth has 12 hours of daylight and 12 hours of darkness", "the Sun rises due east and sets due west", "the Sun's path is coincident with the celestial equator", "all of A, B and C", "only A and C"], answer: 3 },
+            { q: "A sidereal period is an orbit relative to the position of what?", options: ["the position of the Sun", "the position of the Moon", "the position of the meridian", "the position of Jupiter", "the position of the stars"], answer: 4 },
+            { q: "If you see the Moon rising in the East just as the Sun is setting in the west then the phase of the Moon is", options: ["waning crescent", "first quarter", "new", "third quarter", "full"], answer: 4 },
+            { q: "Which of the following is the reason for the solar day being longer than a sidereal day?", options: ["the combined effect of the rotation of the Earth and its orbit about the Sun", "the non-circular orbit of the Earth around the Sun", "precession of the Earth's axis", "the tilt of the Earth's axis", "the Earth year being a non-integer number of Earth days"], answer: 0 },
+            { q: "Which of the following best describes the tropic of Cancer?", options: ["It is another name for the equator.", "It is a place where the Sun is directly overhead at noon on the summer solstice.", "It is a place where the Sun is directly overhead at noon on the spring equinox.", "It is any place where it is always very warm.", "It is a place where the Sun appears to remain stationary in the sky."], answer: 1 },
+            { q: "Which of the following statements about the Moon is false?", options: ["We see only one side of the Moon...", "The side of the Moon we never see from Earth is always in darkness.", "The Moon has no measurable atmosphere.", "During a full Moon it is impossible to have a solar eclipse.", "The Moon is often visible during daylight hours."], answer: 1 },
+            { q: "Which of the following statements is NOT true about the motions of the Moon?", options: ["The illuminated side of the Moon always point in a direction toward the Sun.", "The Moon rises approximately 50 minutes later each night.", "A new moon rises and sets with the Sun.", "A crescent moon will be seen either just after sunset or just before sunrise.", "A first-quarter moon and a third-quarter moon occur about two weeks apart."], answer: 1 },
+            { q: "While in Bracebridge, ON (Lat 45°) at the spring equinox, the Sun follows the path where it", options: ["rises due north-east...", "rises due east, crosses meridian at 45° north...", "rises due east, crosses meridian at zenith...", "rises due east, crosses the meridian at an altitude of 45° in the south, and sets due west.", "rises due north-east, crosses meridian at zenith..."], answer: 3 },
+            { q: "What is the apparent visual magnitude of a star a measure of?", options: ["the star’s luminosity", "the star’s size...", "the star’s temperature...", "the star’s colour...", "the star’s brightness as seen by human eyes on Earth"], answer: 4 },
+            { q: "The number of days in a month is associated with", options: ["Lunar phases", "Various annual holidays", "The motion of Jupiter around the Sun", "Earth's rotation around the Moon", "Solar phases"], answer: 0 },
+            { q: "Which of the following years is NOT a leap year?", options: ["1984", "2012", "1900", "2000", "2020"], answer: 2 },
+            { q: "Which of the following is the best reason for the leap years?", options: ["the tilt of the Earth's axis", "precession of the Earth's axis", "the non-circular orbit of the Earth", "combined rotation and precession", "the Earth year being a non-integer number of Earth days"], answer: 4 }
+        ],
+        2: [
+            { q: "Which of the following is not an example of a 'pseudoscience'?", options: ["Tarot Cards", "Palm Reading", "Reading tea leaves", "Astrology", "Astronomy"], answer: 4 },
+            { q: "Johannes Kepler and Galileo Galilei lived pretty much at the same time. When was that timeframe?", options: ["1350-1450", "1450-1550", "1550-1650", "1650-1750", "1750-1850"], answer: 2 },
+            { q: "Who built Stonehenge?", options: ["The Druids...", "A combination of Scottish and Irish peoples...", "The Teutonic kings...", "Welsh peoples...", "Nobody really knows for sure."], answer: 4 },
+            { q: "Galileo observed that Jupiter has moons. From this information you may conclude that", options: ["Jupiter orbits the Earth.", "Ptolemy's vision of the solar system is correct...", "Jupiter is the centre of the solar system.", "Jupiter orbits the Sun.", "there are so-called heavenly objects that do not orbit the Earth..."], answer: 4 },
+            { q: "What determines the date for Easter?", options: ["The Sunday before the first new moon...", "The Sunday following the first full moon following the spring equinox.", "The second Sunday after the spring equinox.", "The Sunday following the first new moon...", "The first Sunday after the spring equinox."], answer: 1 },
+            { q: "Where is Stonehenge located?", options: ["In Italy, just north of Rome.", "In France, not far from Paris.", "On the island of Sicily...", "In England, west of London.", "In Germany, south of Berlin."], answer: 3 },
+            { q: "Which statement about the Cosmological Principle is valid?", options: ["It is based on two tenets...", "It is based on only one tenet...", "It is based on only one tenet...", "It is based on two tenets involving the universality of the laws of physics and chemistry and the belief that there is nothing special about the Earth.", "It is based on three tenets..."], answer: 3 },
+            { q: "The Metonic cycle recognizes what?", options: ["The cycle of solar eclipses...", "The cycle of sunspots...", "The cycle of eclipses...", "The cycle of lunar phases that repeats every 19 years.", "The cycle of seasons on Earth."], answer: 3 },
+            { q: "Which of the following is not part of Newton's universal law of gravitation?", options: ["The force of gravity between Earth and Mars depends on both masses.", "The gravitational attraction between two objects depends directly on the distance between their centres of mass.", "The gravitational attraction between two objects depends inversely as the square of the distance...", "The gravitational attraction... depends on the product of their masses.", "If the Sun's mass were reduced..."], answer: 1 },
+            { q: "Using Kepler’s third law (p² = r³) what is the approximate period of Jupiter's orbit if its average distance from the Sun is 5.2 AU?", options: ["5.2 years", "11.8 years", "15.6 years", "23.6 years", "27 years"], answer: 1 },
+            { q: "Ptolemy was important in the history of astronomy because he", options: ["developed the first scientific model...", "was the first to create a model where Sun is center...", "developed a model of the solar system that made sufficiently accurate predictions of planetary positions to remain in use for many centuries.", "was the first to believe that all orbits are perfect circles.", "was the first to believe in an Earth-centred universe."], answer: 2 },
+            { q: "Which of the following best describes the origin of ocean tides on Earth?", options: ["Tides are caused by the 23.5° tilt...", "Tides are caused by the force of gravity exerted by the Moon on the Earth.", "The Moon's gravity pulls harder on water...", "Tides are caused primarily by the Sun...", "Tides are caused by the difference in the force of gravity exerted by the Moon across the sphere of the Earth."], answer: 4 },
+            { q: "Early Greek philosophers who influenced the development of scientific thought included", options: ["Thales, Plato, Socrates, and Galileo", "Aristotle, Socrates, Plato, and Ptolemy", "Pythagoras, Socrates, Aristotle Onassis, and Ptolemy", "Ptolemy, Socrates, Tycho Brahe and Plato", "Pythagoras, Socrates, Kepler and Aristotle"], answer: 1 },
+            { q: "A planet has an average speed of 33 km/sec. When closest it moves at 31 km/sec and when farthest it moves at 35 km/sec. Why is this incorrect?", options: ["The average speed is too slow.", "Using these values, p² does not equal r³.", "Kepler's second law says speed never changes.", "From Kepler's second law we infer that a planet must move fastest when it's closest, not when it is farthest away.", "Planets remain at a constant distance..."], answer: 3 },
+            { q: "When Copernicus first created his Sun-centred model, it did not lead to substantially better predictions than the Ptolemaic model. Why?", options: ["Copernicus misjudged the speeds...", "Copernicus placed the Sun at the centre but did not realize Moon orbits Earth.", "Copernicus placed the planets in the wrong order...", "Copernicus used perfect circles for the orbits of the planets.", "Copernicus misjudged the distances..."], answer: 3 },
+            { q: "Which of the following peoples show a record of interest in anything related to astronomy?", options: ["the Mayan civilization", "the Chinese", "the Inuit people", "Only A and B", "All of A, B, and C"], answer: 4 },
+            { q: "While a planet is close to the star in an elliptical orbit it __________, but while it is far away it ____________.", options: ["moves slower, moves faster", "rotates (spins) faster, rotates slower", "rotates (spins) slower, rotates faster", "moves slower, rotates (spins) faster", "moves faster, moves slower"], answer: 4 },
+            { q: "Which of the following statements about orbital motion is not true?", options: ["Some orbits are closed orbits...", "An elliptical orbit is an example of an open orbit.", "Two objects orbiting each other revolve about their mutual centre of mass...", "Once an object is in a 'circular' orbit it does not need energy...", "The Moon is in a stable orbit around the Earth."], answer: 1 },
+            { q: "Betelgeuse emits primarily red light while Rigel appears a blue colour. What can you determine?", options: ["Betelgeuse is more massive than Rigel.", "Betelgeuse is moving toward you...", "Rigel is hotter than Betelgeuse.", "Betelgeuse is actually a binary star...", "Betelgeuse is moving away from you..."], answer: 2 },
+            { q: "What type of energy is visible light energy?", options: ["Gravitational Potential energy", "Heat energy", "Kinetic energy", "Nuclear energy", "Radiative energy"], answer: 4 },
+            { q: "When a falling rock hits the ground, what has happened to the energy?", options: ["It is transformed back into gravitational potential energy.", "The energy goes into the ground and changes Earth's orbit.", "It is lost forever.", "The energy goes to producing sound and to heating the ground, rock, and surrounding air.", "The rock keeps the energy inside it."], answer: 3 },
+            { q: "What does temperature measure?", options: ["the average mass of particles", "the average size of particles", "the total number of particles", "the average kinetic energy of particles in a substance", "the total potential energy of particles"], answer: 3 },
+            { q: "Which of the following is not regarded as a heat transfer mechanism?", options: ["Segregation", "Convection", "Radiation", "Conduction", "Only A, B and C"], answer: 0 },
+            { q: "During which lunar phase do neap tides (lowest tides) occur?", options: ["full moon", "both first and third quarter moons", "new moon", "first quarter moon", "waxing gibbous moon"], answer: 1 },
+            { q: "Whose model of the universe was supported by Galileo's observations of the phases of Venus?", options: ["Nicolaus Copernicus's model", "Claudius Ptolemy's model", "Isaac Newton's model", "Tycho Brahe's model", "Aristotle's model"], answer: 0 },
+            { q: "What would happen if the Space Shuttle were launched with a speed greater than the Earth's escape velocity?", options: ["It would travel away from the Earth into the solar system.", "It would orbit the Earth at a faster velocity.", "It would travel in a higher orbit around the Earth.", "It would take less time to reach its bound orbit.", "It would be in an unstable orbit."], answer: 0 },
+            { q: "Radiative (or radiant) energy is", options: ["heat energy.", "any energy connected with motion.", "light energy.", "energy from nuclear power plants.", "energy used in home radiators."], answer: 2 },
+            { q: "At which lunar phases(s) are the tides most pronounced (the highest tide levels)?", options: ["New moon", "Both new and full moons", "Full Moon", "Both first and third quarters", "First quarter"], answer: 1 },
+            { q: "According to the Copernican model, how do planets move when they are closer to the Sun?", options: ["They move faster", "They are hotter, so it's summer then", "They move slower", "They move at different rates along their orbits", "They move in ellipses"], answer: 0 },
+            { q: "A green apple looks green because", options: ["it absorbs green light and emits all other colors.", "it emits green light and absorbs all other colors.", "it reflects all colours but green light.", "it transmits green light and emits all other colors.", "it reflects green light and absorbs all other colors."], answer: 4 },
+            { q: "Which of the following are systems for measuring temperature?", options: ["Fahrenheit", "Celsius", "Newtonian", "Kelvin", "Only A, B and D"], answer: 4 },
+            { q: "Which of the following statements correctly describes the law of conservation of energy?", options: ["An object always has the same amount of energy.", "It is not really possible for an object to gain or lose potential energy...", "Energy can change between many different forms... but is ultimately destroyed.", "The fact that you can fuse hydrogen means helium can be turned into hydrogen...", "The total quantity of energy in the universe never changes."], answer: 4 },
+            { q: "If your mass is 75 kg on Earth, what would be your mass on Saturn which is about 95 times as massive as Earth?", options: ["About 20 kg", "About 75 pounds", "About 75 grams", "About the same, 75 kg", "About 7,125 kilograms"], answer: 3 },
+            { q: "Which of the following statements about mass is false?", options: ["The average adult human mass is about 160 pounds.", "Mass is measured in kilograms.", "If you were to go to the Moon your mass would be the same as your mass on Earth.", "Mass is measured in grams.", "Weight and mass are not the same quantities."], answer: 0 },
+            { q: "From lowest energy to highest energy, which order is correct?", options: ["radio, infrared, visible, ultraviolet, X-ray, gamma", "radio, X-ray, visible, ultraviolet, infrared, gamma", "visible, infrared, X-ray, ultraviolet, gamma, radio", "infrared, visible, ultraviolet, X-ray, gamma, radio", "gamma, X-ray, visible, ultraviolet, infrared, radio"], answer: 0 },
+            { q: "Which of the following objects would not be considered an optical device?", options: ["a camera", "the human eye", "a microscope", "a telescope", "your bedroom window"], answer: 4 },
+            { q: "The light gathering power of a 5-cm telescope is ____________ that of a 10-cm telescope.", options: ["2 times less", "equal to", "less than", "twice", "greater than"], answer: 2 },
+            { q: "Which of the following statements about X-rays and radio waves is not true?", options: ["X-rays have higher energy than radio waves.", "X-rays and radio waves are both forms of light.", "X-rays have shorter wavelengths than radio waves.", "X-rays have a higher frequency than radio waves.", "Neither X-rays nor radio waves can penetrate the Earth’s atmosphere."], answer: 4 },
+            { q: "The two basic types of telescopes are what?", options: ["reflection and spectrographic", "reflection and ones using mirrors", "refraction and Galilean", "refraction and ones using lenses", "reflection and refraction"], answer: 4 },
+            { q: "Which of the following statements about the Hubble Space Telescope is false?", options: ["It orbits the Earth well above the Earth’s atmosphere", "It was designed by a famous astronomer named Edwin Hubble", "It operates 24 hours per day", "It will eventually be replaced by the James Webb Space Telescope", "It operates mainly at visible light frequencies"], answer: 1 },
+            { q: "The Doppler Shift is a wave phenomenon that", options: ["Uses the change in wavelength of light to determine the speed of a moving star.", "Uses the change in wavelength... to determine the age...", "Uses the change in the speed of light...", "Uses the change in light intensity...", "Uses the change in the frequency... to determine the age..."], answer: 0 },
+            { q: "The 29.5-day lunar month results in full moon dates that slowly change. This cycle repeats every 19 years. This is:", options: ["Known since Galileo's time...", "The basis for Easter dates.", "A result of Earth's 23.5 degree tilt.", "This cycle repeats every 19 years when the lunar phases occur again on the same dates.", "Known as the saros cycle."], answer: 3 },
+            { q: "The larger the size of the telescope the greater the what?", options: ["range of wavelengths", "magnification", "light gathering ability", "range of colours", "more exoplanets you can observe"], answer: 2 },
+            { q: "Suppose the angular separation of two stars is smaller than the angular resolution of your eyes. How will the stars appear?", options: ["You will see only the larger star.", "You will see two distinct stars.", "You will not be able to see the two stars at all.", "The two stars will appear to be touching...", "The two stars will look like a single point of light."], answer: 4 },
+            { q: "A single photon of which of the following colours has the greatest amount of energy?", options: ["green", "red", "violet", "indigo", "yellow"], answer: 2 },
+            { q: "Which of the following is not an advantage of the Hubble Space Telescope over ground-based telescopes?", options: ["Stars do not twinkle when observed from space.", "It can observe infrared and ultraviolet light...", "It never has to close because of bad weather.", "Although it orbits the Earth... it is, after all, closer to the stars.", "Observers on the ground can use it at any time..."], answer: 3 },
+            { q: "A hot star emits primarily what colour of visible light?", options: ["ultraviolet", "infrared", "yellow", "blue", "red"], answer: 3 },
+            { q: "The trouble with refraction telescopes is that", options: ["different colours of visible starlight get focused to slightly different points (chromatic aberration).", "the bigger the telescope the heavier the main lens...", "different colours... get focused differently because of poor quality lenses.", "the lenses and mirrors cannot be coordinated.", "it is impossible to view other galaxies..."], answer: 0 },
+            { q: "Without telescopes, we can see the Moon because it", options: ["reflects visible light coming from the Sun.", "emits ultraviolet radiation...", "reflects microwaves from Saturn.", "Emits infrared light because of internal heat.", "reflects only infrared light coming from the Sun."], answer: 0 },
+            { q: "Which of the following statements best describes the principle advantage of telescopes over eyes?", options: ["Telescopes can collect far more light with far better angular resolution.", "Telescopes can collect far more light with far greater magnification.", "Telescopes can see farther without image distortion...", "Telescopes have much more magnification and better angular resolution.", "Telescopes can collect more light and are unaffected by twinkling."], answer: 0 }
+        ],
+        3: [
+            { q: "Which of the following statements about asteroids is false?", options: ["Some asteroids seem to have originated on Mars.", "Most asteroids have congregated in the asteroid belt...", "Sometime asteroids enter Earth's atmosphere...", "Asteroids have been found outside the asteroid belt.", "An asteroid is just a failed comet."], answer: 4 },
+            { q: "Where are most of the known asteroids found?", options: ["between Mars and Jupiter.", "in the Kuiper Belt.", "in the Oort Cloud.", "between Jupiter and Saturn.", "between Mercury and Venus."], answer: 0 },
+            { q: "What is the origin of asteroids and comets?", options: ["Remains of a terrestrial planet...", "Chunks of pure metal and rock...", "Leftover planetesimals between Mars and Jupiter.", "Material from interstellar space...", "Asteroids are leftover inner planetesimals; comets are leftover outer planetesimals."], answer: 4 },
+            { q: "Which of the following statements about the moons of the solar system is false?", options: ["Earth has one moon...", "Saturn has the most moons in our solar system.", "Moons vary in size...", "All planets have moons except Mercury.", "Mars has two small moons..."], answer: 3 },
+            { q: "Ring systems around planets are:", options: ["quite common among terrestrial planets.", "quite common; all planets have them.", "fairly rare; just Saturn has rings.", "quite common among the large, gas planets; all Jovian planets have them.", "fairly rare; just Venus and Saturn have them."], answer: 3 },
+            { q: "Which of the following is not characteristic of the terrestrial planets?", options: ["They all have solid surfaces.", "They have higher densities than the jovian planets.", "They are more closely spaced together than the jovian planets.", "They have more moons than the jovian planets.", "They are relatively smaller than the jovian planets."], answer: 3 },
+            { q: "Rank the following planets in order of size from the smallest to the largest.", options: ["Mercury, Mars, Uranus, Saturn, Earth", "Mercury, Mars, Earth, Uranus, Saturn", "Mars, Mercury, Earth, Saturn, Uranus", "Uranus, Mars, Mercury, Earth, Saturn", "Mars, Mercury, Earth, Saturn, Uranus"], answer: 1 },
+            { q: "Which of the following characteristics of the Jovian planets is (are) correct?", options: ["They have varying sizes...", "They are relatively large, low-density objects with solid surfaces.", "They are closer to the Sun than the terrestrial planets...", "Both A and B are correct.", "None of A, B or C are correct."], answer: 4 },
+            { q: "Which of the following statements about comets is false?", options: ["Halley's comet has an elliptical orbit...", "Most comets come from either the Kuiper Belt or the Oort cloud.", "Comet tails consist of two parts...", "The nucleus of a comet is quite large, about 100 km across.", "Cometary orbits can be elliptical, parabolic, and hyperbolic."], answer: 3 },
+            { q: "Which of the following is not characteristic of the Jovian planets?", options: ["Despite thick atmospheres they all have solid surfaces on which to land.", "They are all spaced farther apart than the terrestrial planets.", "They are all larger than any of the terrestrial planets.", "They all have lower densities than Venus or Earth.", "They all have more than 10 moons."], answer: 0 },
+            { q: "We have determined the age of the solar system through:", options: ["taking measurements of tree rings.", "radioactive dating.", "the study of rocks...", "the analysis of the sand...", "all of A, B, C and D."], answer: 1 },
+            { q: "Which of the following characteristics of the terrestrial planets is correct?", options: ["They are relatively small, low-density...", "They are relatively small, high-density objects with solid surfaces on which to walk.", "They have varying sizes...", "They are all closer to the Sun...", "All of A, B, C and D are correct."], answer: 1 },
+            { q: "Which of the following statements about meteorites is true?", options: ["Meteorites are often called 'shooting stars'...", "A meteorite is the same thing as an asteroid.", "A meteorite is the same thing as a meteoroid.", "A meteorite becomes a meteoroid once it hits the Earth's surface.", "A meteorite is what's left of a meteor when it hits the Earth's surface."], answer: 4 },
+            { q: "What is the range in size for asteroids?", options: ["1 metre to 10 km", "1 km to 1000 km", "1 metre to 1000 km", "100 metres to 100 km", "10 metres to 10,000 metres"], answer: 2 },
+            { q: "The rotation (daily spin) of the planets are:", options: ["All in the same direction (except for Venus and Neptune)", "All in the same direction (with the exception of Venus and Uranus)", "All in the same direction (except for Mercury)", "All in the same direction (clockwise)", "All in the same direction (counter clockwise)"], answer: 1 },
+            { q: "Which of the following statements about the Jovian planets is true?", options: ["Although Neptune is most massive, Jupiter is largest.", "Jupiter is the least dense planet...", "The outermost Jovian planet, Neptune, is most massive.", "Although all Jovian planets have ring systems only Saturn's rings are readily visible from Earth.", "Uranus has a strange clockwise orbit."], answer: 3 },
+            { q: "The age of our solar system is approximately", options: ["13.8 billion years.", "4.6 million years.", "4.6 billion years.", "10,000 years.", "13.8 million years."], answer: 2 },
+            { q: "Why are the inner planets made of denser materials than the outer planets?", options: ["Materials segregated into bands naturally...", "In the inner part only metals/rocks condensed (high temp), while hydrogen compounds condensed in cooler outer regions.", "Centrifugal forces flung lighter materials outward...", "Denser materials sank to the center...", "The Sun's gravity pulled denser materials inward..."], answer: 1 },
+            { q: "What is meant by the period of heavy bombardment?", options: ["The Jovian planets have been bombarded with rogue asteroids...", "London bombing during WWII.", "Asteroids hitting Earth 65 million years ago...", "Dark Ages meteor rain...", "During the first 500-700 million years, larger objects constantly bombarded terrestrial objects."], answer: 4 },
+            { q: "Atmospheres formed around some terrestrial planets because", options: ["outgassing through volcanic activity plus a strong enough gravity kept the gas from escaping into space", "their gravity was great enough to capture atoms...", "radioactivity produced oxygen...", "human activity produces CO2...", "all of A, B, C and D."], answer: 0 },
+            { q: "According to solar system formation theory, why does the Sun rotate slowly today?", options: ["It was born rotating slowly...", "It lost angular momentum due to internal friction.", "It transferred angular momentum to planets...", "It transferred angular momentum to charged particles in its magnetic field (solar wind).", "It lost angular momentum because everything slows down."], answer: 3 },
+            { q: "The terrestrial planet cores contain mostly metal because", options: ["radioactivity created metals...", "convection carried metals to the core.", "only metals condensed closest to Sun...", "metals sank to the centre during a time when the interiors were molten throughout.", "the entire planets are made mostly of metal."], answer: 3 },
+            { q: "The terrestrial planets and the giant Jovian planets have different compositions because", options: ["the terrestrial planets are closer to the Sun.", "the Jovians are much larger.", "the Jovian planets are closer to the Sun.", "the terrestrial planets have few moons.", "the giant Jovian planets are made mostly of solids."], answer: 0 },
+            { q: "About how much of the solar nebula consisted of elements heavier than hydrogen and helium?", options: ["50% by mass.", "10% by mass.", "25% by mass.", "98% by mass.", "2% by mass."], answer: 4 },
+            { q: "What is the 'galactic recycling process'?", options: ["When stars die some of their mass is ejected... and used to form new stars.", "When stars die their atoms form groups...", "When galaxies join together...", "Combination of 2 and 3.", "Combination of 1 and 2."], answer: 0 },
+            { q: "Why did the solar nebula heat up as it collapsed?", options: ["Nuclear fusion...", "Shock wave from supernova...", "Collisions among planetesimals...", "As the cloud shrank, gravitational potential energy converted to kinetic and then thermal energy.", "Radiation from other stars..."], answer: 3 },
+            { q: "Which of the following solar system moons likely formed through the same processes as our solar system?", options: ["The moons of Mars, Phobos and Deimos.", "Venus's small moon, Dactyl.", "Jupiter's so-called Galilean moons.", "Uranus's moon, Triton", "All of A, C and D."], answer: 2 },
+            { q: "What is a key difference between the moons of the terrestrial and Jovian planets?", options: ["Jovian moons are larger than all terrestrial moons.", "Moons of the terrestrial planets are mostly rocky...", "Most of the Jovian moons were formed in a disk around each planet.", "None of the terrestrial moons are captured bodies.", "Most terrestrial moons rotate in opposite directions..."], answer: 2 },
+            { q: "The nebular theory successfully predicts all but one of the following. Which one?", options: ["Compositional differences...", "Planets orbit in circular orbits...", "Craters on the Moon.", "The equal number of terrestrial and Jovian planets.", "Asteroids, Kuiper-belt objects and comets."], answer: 3 },
+            { q: "The sticking together of small but solid particles is known as?", options: ["Gravitational collapse.", "Accretion", "Differentiation", "Gluons", "Condensation"], answer: 1 },
+            { q: "What constitutes the solar wind?", options: ["Similar to wind on Earth...", "Stream of hot air from fusion...", "Continuous emission of charged particles (electrons, protons) from the solar surface.", "Occurs in spurts during CMEs...", "Combination of A and B."], answer: 2 },
+            { q: "In the early days of formation, what three basic things occurred?", options: ["Temp decreased, rotation decreased, sphere flattened.", "Temp increased, rotation rate increased, and nebular sphere flattened into a disk.", "Temp increased, rotation increased, sphere became oblate.", "Temp decreased, rotation increased, flattened.", "Temp increased, rotation decreased, flattened."], answer: 1 },
+            { q: "What is the significance of the temperature gradient in the early solar system?", options: ["1. The core became hottest...", "2. Near Mercury, metals condensed...", "3. Near Earth, water could be liquid...", "4. Beyond frost line, gases condensed...", "All of answers 1, 2, 3 and 4."], answer: 4 },
+            { q: "What was the frost line of the solar system?", options: ["Distance where metals condense...", "Distance where H/He condense...", "Distance where rocks condense...", "Distance where asteroids form...", "Distance where hydrogen compounds and methane condense into ices (between Mars and Jupiter)."], answer: 4 },
+            { q: "Why were Canadians Campbell, Walker, and Yang not recognized for the first exoplanet discovery?", options: ["They looked during daytime...", "The exoplanet orbited a variable star.", "They couldn't convince other researchers that their techniques were good enough (noisy data).", "They didn't examine the correct star.", "Other researchers saw nothing."], answer: 2 },
+            { q: "What type of exoplanet causes the largest Doppler shift in its star?", options: ["A massive planet that is close to its sun.", "A massive planet that is far from its sun.", "Average mass/distance.", "Low-mass planet close to sun.", "Low-mass planet far from sun."], answer: 0 },
+            { q: "Which planet has the greatest effect on the Sun's movement about the centre of mass?", options: ["Mars", "Jupiter", "Saturn", "Earth", "Mercury"], answer: 1 },
+            { q: "Which statement best describes the transit method?", options: ["Taking a photograph...", "Measuring star size...", "Measuring star wobble...", "Measuring Doppler shift...", "Measuring periodic dimming of light as exoplanet crosses star."], answer: 4 },
+            { q: "Which statement best describes the direct detection technique?", options: ["Actually seeing the exoplanet orbiting the star through powerful telescopes.", "Observing frequency shifting...", "Observing side-to-side movement...", "Observing brightness dip...", "Observing gravitational effects on other stars."], answer: 0 },
+            { q: "Which statement best describes the Doppler technique?", options: ["Actually seeing the exoplanet...", "Observing gravitational effects...", "Observing brightness dip...", "Observing side-to-side movement...", "Observing shifting frequency of light as star wobbles (radial velocity)."], answer: 4 },
+            { q: "What is Fomalhaut b?", options: ["Binary star partner...", "Asterism in Pisces...", "Second exoplanet discovered by direct detection...", "First exoplanet observed by the direct detection method orbiting Fomalhaut.", "Constellation in southern sky."], answer: 3 },
+            { q: "What is Alpha Centauri Bb?", options: ["First exoplanet by Kepler.", "Closest exoplanet to our solar system (candidate) found orbiting Alpha Centauri B.", "Brightest star in Centaurus.", "Variant of a virus.", "Exoplanet in Whirlpool galaxy."], answer: 1 },
+            { q: "What is an extrasolar planet?", options: ["An 'extra' planet...", "A planet that orbits a star that is not our Sun.", "A planet larger than the Sun.", "An extra large planet.", "A planet orbiting another planet."], answer: 1 },
+            { q: "What is special about the star 51 Pegasi?", options: ["Largest white dwarf.", "First star with intelligent life.", "Pulsar with planets.", "First star with multiple planets.", "First main sequence star found to have a planet orbiting it."], answer: 4 },
+            { q: "Which of the following statements about exoplanets is false?", options: ["Information indicates most are similar to our own solar system.", "Majority orbit at radii less than 5 AU.", "Considerable number have elliptical orbits.", "Masses are generally larger than Earth's.", "No planets found at radii less than Mercury's."], answer: 0 },
+            { q: "Why would a star continuously wobble back-and-forth?", options: ["Because it is revolving around a common centre of mass with other planets.", "Air currents...", "Too much to drink.", "Precession.", "Collision with supernova."], answer: 0 },
+            { q: "Which space telescope was dedicated entirely to discovering exoplanets?", options: ["Hubble", "Apollo", "Kepler", "Spitzer", "Cassini"], answer: 2 },
+            { q: "Why has the astrometric technique been so unsuccessful?", options: ["The sideways displacement of the star is simply too small to be observed.", "Brightness overwhelms ability to see...", "Observer must watch too long...", "Exoplanets not bright enough...", "Edge-on observation points..."], answer: 0 },
+            { q: "Which statement best describes the astrometric technique?", options: ["Actually seeing the exoplanet...", "Observing the slight side-to-side movement of the star in space.", "Observing brightness dip...", "Observing frequency shifting...", "Observing gravitational effects on other stars."], answer: 1 },
+            { q: "Which technique has yielded the fewest detections?", options: ["Doppler technique", "Transit method", "Astrometric method", "Gravitational lensing", "Direct Detection"], answer: 2 }
+        ],
+        4: [
+            { q: "All but one of the following statements about Venus are true. Which one is false?", options: ["Atmospheric pressure is 9 times Earth's.", "One landmass is as large as Africa.", "Volcanic activity caused greenhouse gases.", "Atmosphere has sulphuric acid.", "Surface temperature over 700 K."], answer: 0 },
+            { q: "What is the Moon's average orbital distance from the Sun?", options: ["1.0 AU", "2.0 AU", "0.9 AU", "1.5 AU", "0.5 AU"], answer: 0 },
+            { q: "Which component of our atmosphere has increased in the last 100 years leading to warming?", options: ["Oxygen", "Carbon Dioxide", "Water Vapour", "Nitrogen", "Neon"], answer: 1 },
+            { q: "Which component of our atmosphere has steadily increased (duplicate)?", options: ["Nitrogen", "Water Vapour", "Oxygen", "Carbon Dioxide", "Argon"], answer: 3 },
+            { q: "What is the greatest constituent of Earth's atmosphere?", options: ["Carbon Dioxide", "Water Vapour", "Nitrogen", "Argon", "Oxygen"], answer: 2 },
+            { q: "How long does it take the Earth to revolve around the Sun once?", options: ["24 hours", "365.25 days", "23 hours 56 minutes", "29.5 days", "365 days"], answer: 1 },
+            { q: "What function does the ozone layer provide?", options: ["Dissolved in water...", "By-product of photosynthesis...", "Absorbs infrared...", "None of the others.", "Shields us from ultraviolet radiation harmful to life."], answer: 4 },
+            { q: "Which planet has the greatest orbital inclination?", options: ["Earth", "Jupiter", "Mercury", "Venus", "Mars"], answer: 2 },
+            { q: "How have we constructed maps of Venus' surface?", options: ["computer models", "telescopes from Earth", "using radar from spacecraft orbiting Venus", "landing spacecraft", "telescopes on spacecraft"], answer: 2 },
+            { q: "Why does burning fossil fuels increase the greenhouse effect?", options: ["Produces infrared light...", "All answers true.", "Warms the planet.", "Depletes ozone...", "Releases carbon dioxide into the atmosphere."], answer: 4 },
+            { q: "Which statement about Venus is false?", options: ["Rotation is retrograde...", "No oceans but large landforms...", "Temperature is 740 K...", "Orbits in 225 days, day is 117 Earth days...", "Magnetic field has same intensity as Earth."], answer: 4 },
+            { q: "Which statement about conjunctions/opposition is false?", options: ["Mercury never in opposition.", "Terms are orbital mechanics.", "Jupiter never in inferior conjunction.", "Mars can have inferior conjunction but not superior.", "Mercury/Venus have both conjunctions."], answer: 3 },
+            { q: "Earth's atmosphere contains small amounts of CO2 because", options: ["Volcanoes didn't outgas as much...", "Lost during bombardment...", "Chemical reactions destroyed it...", "CO2 dissolves in water and is contained in oceans/rocks.", "Earth greenhouse effect is weak."], answer: 3 },
+            { q: "What is the radius of Venus' orbit?", options: ["0.72 AU", "0.39 AU", "1.72 AU", "1.42 AU", "1.0 AU"], answer: 0 },
+            { q: "The origin of Earth's Moon is", options: ["Same nebula...", "Formed when comet hit Earth...", "Combination of capture/daughter/impact theory (collision with Mars-like object).", "From outer space...", "Captured planet from asteroid belt."], answer: 2 },
+            { q: "There are no auroras on Venus because it", options: ["lacks a strong magnetic field.", "lacks an ionosphere.", "lacks strong winds.", "is too hot.", "lacks atmospheric oxygen."], answer: 0 },
+            { q: "Jupiter and Saturn emit ________ heat than absorbed due to ________.", options: ["more; heat left over from their formation", "more; nuclear reactions...", "about the same...", "less; nuclear fusion...", "less; heat left over..."], answer: 0 },
+            { q: "Region where magnetic field deflects solar wind is called?", options: ["Hydrosphere", "Magnetosphere", "Aurora", "Ice line", "Corona"], answer: 1 },
+            { q: "Which statement about Uranus is false?", options: ["Least massive Jovian.", "Appears to roll (90 deg tilt).", "Distance 19.2 AU.", "Appears blue due to methane.", "Has the Great Red Spot."], answer: 4 },
+            { q: "Which of the following do the Jovian planets NOT have in common?", options: ["They are all less dense than water.", "Large H/He atmospheres...", "More massive than terrestrial.", "Rotate faster than Earth.", "Have rings and satellites."], answer: 0 },
+            { q: "Which of the following do Jovian planets have in common?", options: ["Large atmospheres...", "Weather systems...", "Only A and B.", "All of A, B and C.", "At least 10 moons."], answer: 3 },
+            { q: "Which statement about Jupiter is false?", options: ["Smallest rotational rate.", "Solid core bigger than Earth.", "Largest planet.", "Density greater than air but less than water.", "Only one without seasons."], answer: 3 },
+            { q: "Which of the following does Jupiter not have?", options: ["dynamo effect", "convection", "rings", "crustal plates on its surface", "hot interior"], answer: 3 },
+            { q: "Mars is about how far from the Sun?", options: ["1.0 AU", "2.5 AU", "0.7 AU", "5.0 AU", "1.5 AU"], answer: 4 },
+            { q: "What is the main constituent of Jupiter's atmosphere?", options: ["Helium", "Hydrogen", "Carbon monoxide", "Oxygen", "Methane"], answer: 1 },
+            { q: "Which statement about Jupiter is false?", options: ["Shortest rotational period.", "Great Red Spot observed only last 75 years.", "Core massive than Earth's.", "Doesn't have seasons.", "Largest planet."], answer: 1 },
+            { q: "Neptune is how far from the Sun?", options: ["5 AU", "30 AU", "10 AU", "20 AU", "40 AU"], answer: 1 },
+            { q: "Which statement about Martian exploration is false?", options: ["Began with Viking...", "Remains of life found near Olympus Mons.", "Water was once abundant.", "Curiosity exploring Gale Crater.", "Spirit and Opportunity were successful."], answer: 1 },
+            { q: "How far from the Sun is Saturn?", options: ["20 AU", "10 AU", "5 AU", "1 AU", "15 AU"], answer: 1 },
+            { q: "Why does Jupiter have distinct cloud layers?", options: ["Different gases...", "Different layers represent clouds made of gases that condense at different temperatures.", "Winds prevent clouds...", "Random formation...", "Liquid water condensation regions."], answer: 1 },
+            { q: "Which statement about Saturn is false?", options: ["Takes 29.5 years to orbit.", "Has Titan and others.", "First discovered by Galileo 400 years ago.", "Second most massive.", "Density less than water."], answer: 2 },
+            { q: "Which statement about Mars' atmosphere is false?", options: ["Very thin (<1% Earth).", "Main constituent CO2.", "Dry ice polar caps.", "Was denser in early days.", "Now composed mainly of Nitrogen."], answer: 4 },
+            { q: "Which statement about Mars is false?", options: ["Vallis Marineris larger than Grand Canyon.", "Day is 30 mins longer than Earth.", "Two small moons.", "Atmosphere fairly substantial/similar to Earth.", "Olympus Mons is large volcano."], answer: 3 },
+            { q: "What do Ariel, Titania, Umbriel and Miranda have in common?", options: ["Moons of Neptune...", "Moons of Saturn (Cronus)...", "Minor backward moons...", "Moons of Uranus named after Shakespeare characters.", "Moons of Jupiter..."], answer: 3 },
+            { q: "Which statement about Pluto is false?", options: ["Discovered by Tombaugh (1930).", "It is bigger than Mercury.", "Surface hard to see from Earth.", "Eccentric orbit (inside Neptune's orbit for 20 years).", "Has Charon and small moons."], answer: 1 },
+            { q: "Which is not classified as a dwarf planet?", options: ["Makemake", "Ceres", "Eris", "Triton", "Pluto"], answer: 3 },
+            { q: "What is the Cassini division?", options: ["Opaque ring...", "Halfway point...", "Dark dusty ring...", "A large gap produced by orbital resonance with Mimas.", "Widest ring..."], answer: 3 },
+            { q: "Why are there no impact craters on Io?", options: ["Jupiter's gravity...", "Too small...", "Craters have all been buried in lava flows.", "Thick atmosphere...", "Eroded by winds..."], answer: 2 },
+            { q: "Which of these moons is most geologically active?", options: ["Callisto", "Io", "Europa", "Leo", "Enceladus"], answer: 1 },
+            { q: "How thick are Saturn's rings?", options: ["few million km", "tens of thousands km", "few km", "a few tens of meters", "few hundred km"], answer: 3 },
+            { q: "Which statement about Jovian moons is false?", options: ["Europa has smooth surface.", "Titania has 'cantaloupe terrain'.", "Io is most active.", "Galileo discovered largest 4.", "Mimas responsible for Cassini division."], answer: 1 },
+            { q: "Which statement about the definition of a planet is false?", options: ["Pluto not cleared neighbourhood.", "Must orbit Sun.", "Must be nearly round.", "Ceres is not a planet because it is in the asteroid belt.", "Eris prompted definition."], answer: 3 },
+            { q: "Why was Pluto changed to 'dwarf planet'?", options: ["Too small.", "Not round.", "Has not cleared its orbital region.", "Wrong name.", "All of A, B, C and D."], answer: 2 },
+            { q: "What did Huygens discover about Titan?", options: ["Atmosphere 10x Earth.", "Methane rains, evaporates, rains again cyclically.", "Caverns/tunnels.", "Water vapour plume.", "90% oxygen atmosphere."], answer: 1 },
+            { q: "Which statement about Charon is false?", options: ["Orbital period equals Pluto's rotation.", "Orbit is close (20,000 km).", "Astronomers have observed seasonal effects on Charon.", "Half size of Pluto.", "Allowed determination of retrograde rotation."], answer: 2 },
+            { q: "Planetary rings are", options: ["Nearer than large moons.", "In equatorial plane.", "Composed of individual particles.", "Exist for all Jovian planets.", "All of the above."], answer: 4 },
+            { q: "What generates Io's internal heat?", options: ["bombardment", "tidal heating", "radioactive decay", "differentiation", "accretion"], answer: 1 },
+            { q: "Where do majority of dwarf planets reside?", options: ["iCloud", "Orbit around Neptune", "Between Mars and Jupiter", "Oort Cloud", "The Kuiper Belt"], answer: 4 },
+            { q: "Which satellite likely has liquid water below icy crust?", options: ["Titan", "Europa", "Io", "Charon", "Ariel"], answer: 1 },
+            { q: "Which statement about Ceres is false?", options: ["Visited by Dawn.", "Comparable in size to Earth's moon.", "Has thin atmosphere.", "Discovered 1801.", "Largest asteroid."], answer: 1 }
+        ]
+    };
+
+    // --- GAME STATE ---
+    let activeQuestions = [];
+    let wrongQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let isAnswering = false;
+    let isRetryMode = false;
+
+    // --- DOM ELEMENTS ---
+    const menuScreen = document.getElementById('menu-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const endScreen = document.getElementById('end-screen');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const scoreDisplay = document.getElementById('score');
+    const qCountDisplay = document.getElementById('q-count');
+    const containerDiv = document.getElementById('main-container');
+
+    function startQuiz(quizId) {
+        if (!allQuizzes[quizId] || allQuizzes[quizId].length === 0) {
+            alert("This quiz is currently empty.");
+            return;
+        }
+
+        activeQuestions = [...allQuizzes[quizId]];
+        // Shuffle questions for variety
+        activeQuestions.sort(() => Math.random() - 0.5);
+
+        wrongQuestions = []; 
+        currentIndex = 0;
+        score = 0;
+        isRetryMode = false;
+        
+        menuScreen.classList.remove('active');
+        gameScreen.classList.add('active');
+        endScreen.classList.remove('active');
+        
+        updateScore();
+        showQuestion();
+    }
+
+    function startRetryMode() {
+        if (wrongQuestions.length === 0) return;
+        
+        activeQuestions = [...wrongQuestions];
+        wrongQuestions = []; // Reset list
+        currentIndex = 0;
+        isRetryMode = true; 
+
+        endScreen.classList.remove('active');
+        gameScreen.classList.add('active');
+        
+        updateScore();
+        showQuestion();
+    }
+
+    function showQuestion() {
+        containerDiv.classList.remove('wrong-shake');
+        isAnswering = true;
+        optionsContainer.innerHTML = '';
+        
+        const currentData = activeQuestions[currentIndex];
+        
+        let label = isRetryMode ? "Retry" : "Question";
+        qCountDisplay.innerText = `${label}: ${currentIndex + 1} / ${activeQuestions.length}`;
+        questionText.innerText = currentData.q;
+
+        // Grid Layout adjustment
+        if(currentData.options.length === 2) {
+            optionsContainer.classList.add('true-false-grid');
+        } else {
+            optionsContainer.classList.remove('true-false-grid');
+        }
+
+        // Create Buttons
+        const shapes = ['▲', '◆', '●', '■', '★'];
+        currentData.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            // Dynamically assign class based on index, loop colors if > 4
+            let colorClass = `opt-${(index % 4) + 1}`;
+            // If it's the 5th option, let's give it a specific style or reuse one
+            if(index === 4) colorClass = 'opt-5'; 
+            
+            btn.className = `option-btn ${colorClass}`;
+            btn.innerHTML = `<span>${shapes[index] || ''} ${opt}</span>`;
+            btn.onclick = () => handleAnswer(index);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(selectedIndex) {
+        if(!isAnswering) return;
+        isAnswering = false;
+
+        const currentData = activeQuestions[currentIndex];
+        const correctIndex = currentData.answer;
+        const isCorrect = selectedIndex === correctIndex;
+
+        if (isCorrect) {
+            // --- CORRECT ANSWER ---
+            if (!isRetryMode) {
+                const points = 1000;
+                score += points;
+            }
+            updateScore();
+            // Fast transition: 0.2 seconds
+            setTimeout(nextQuestion, 200); 
+
+        } else {
+            // --- WRONG ANSWER ---
+            // 1. Shake Animation
+            containerDiv.classList.add('wrong-shake');
+            
+            // 2. Add to Wrong Queue
+            wrongQuestions.push(currentData);
+
+            // 3. Highlight the correct answer & Dim the others
+            const buttons = optionsContainer.getElementsByTagName('button');
+            for(let i=0; i<buttons.length; i++) {
+                if(i === correctIndex) {
+                    buttons[i].classList.add('correct-flash');
+                } else {
+                    buttons[i].style.opacity = '0.4';
+                }
+            }
+
+            // 4. Wait 1.5 seconds then next (slightly longer to see correct answer)
+            setTimeout(() => {
+                containerDiv.classList.remove('wrong-shake');
+                nextQuestion();
+            }, 1500);
+        }
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        if(currentIndex < activeQuestions.length) {
+            showQuestion();
+        } else {
+            endGame();
+        }
+    }
+
+    function updateScore() {
+        scoreDisplay.innerText = `Score: ${score}`;
+    }
+
+    function endGame() {
+        gameScreen.classList.remove('active');
+        endScreen.classList.add('active');
+        
+        document.getElementById('final-score').innerText = `Final Score: ${score}`;
+        
+        const retrySection = document.getElementById('retry-section');
+        const wrongCountSpan = document.getElementById('wrong-count');
+        
+        if (wrongQuestions.length > 0) {
+            retrySection.style.display = 'block';
+            wrongCountSpan.innerText = wrongQuestions.length;
+        } else {
+            retrySection.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
